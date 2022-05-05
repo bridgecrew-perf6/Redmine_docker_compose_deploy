@@ -1,0 +1,42 @@
+version: "3"
+services:
+  redmine:
+    image: "redmine"
+    restart: always
+    ports:
+      - "3010:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+       - ./volumes/redmine-plugins:/usr/src/redmine/plugins
+       - ./volumes/redmine-themes:/usr/src/redmine/public/themes
+       - ./volumes/redmine-files:/usr/src/redmine/files
+       - ./volumes/redmine-configuration.yml:/usr/src/redmine/config/configuration.yml
+    environment:
+      REDMINE_DB_MYSQL: mysql
+      REDMINE_DB_DATABASE: redmine
+      REDMINE_DB_USERNAME: $REDMINE_DB_USERNAME 
+      REDMINE_DB_PASSWORD: $REDMINE_DB_PASSWORD
+      REDMINE_LANGUAGE: ru
+  mysql:
+    image: "mysql:5.7"
+    restart: always
+    volumes:
+      - ./volumes/database:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: redmine
+      MYSQL_USER: $MYSQL_USER
+      MYSQL_PASSWORD: $MYSQL_PASSWORD 
+    command: ['mysqld', '--character-set-server=utf8mb4', '--collation-server=utf8mb4_unicode_ci', '--max_allowed_packet=1024M']
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-u", "redmine", "--password=$MYSQL_PASSWORD"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+#  adminer:
+#    image: adminer
+#    restart: always
+#    ports:
+#      - 8080:8080
